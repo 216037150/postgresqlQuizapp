@@ -1,19 +1,27 @@
 import { questions } from '../UtilFiles/quizQuestions.js';
 import { validatePlayerName } from '../UtilFiles/validatePlayerName.js';
-import { saveScoreToDb, fetchHighScores } from '../server/dbase.js'; // Assuming fetchHighScores is in the same file
+import { saveScoreToDb } from '../server/scores.js'; 
+import {fetchHighScores} from '../server/server.js'; 
 
-// DOM elements
+// Quiz variables
 let currentQuestion = 0;
 let score = 0;
 let currentPlayerName = ''; 
-const currentDate = new Date(); // Initialize the current date for score saving
+const currentDate = new Date();
 
 function startQuiz() {
     const playerName = document.getElementById('player-name').value.trim();
 
+    console.log('Start button clicked'); 
+
+    if (!playerName) {
+        alert('Please enter a username before starting the quiz.');
+        return; 
+    }
+
     try {
         validatePlayerName(playerName);
-        currentPlayerName = playerName; 
+        currentPlayerName = playerName;
 
         document.getElementById('name-prompt').classList.add('hidden');
         document.getElementById('quiz-container').classList.remove('hidden');
@@ -22,109 +30,82 @@ function startQuiz() {
         displayGreeting();
         setupNextButton();
     } catch (error) {
-        console.error(error.message);
         alert(error.message);
     }
 }
 
-function setupNextButton() {
-    document.getElementById('next-btn').addEventListener('click', () => {
-        currentQuestion++;
-        if (currentQuestion >= questions.length) {
-            endQuiz();
-        } else {
-            loadQuestion();
-            document.getElementById('next-btn').classList.add('hidden');
-        }
-    });
-}
-
-function displayGreeting() {
-    const quizContainer = document.getElementById('quiz-container');
-    const myName = document.getElementById('myName');
-
-    myName.textContent = `Hello, ${currentPlayerName}!`;
-    myName.style.marginBottom = '30px';
-    myName.style.marginTop = '-5px';
-    myName.style.color = 'green';
-    quizContainer.insertBefore(myName, quizContainer.firstChild);
-}
-
+// Load each question
 function loadQuestion() {
-    if (currentQuestion >= questions.length) {
-        endQuiz();
-        return;
-    }
-
     const question = questions[currentQuestion];
     document.getElementById('question').textContent = question.question;
     const optionsContainer = document.getElementById('options');
     optionsContainer.innerHTML = '';
 
-    for (let i = 0; i < question.options.length; i++) {
+    question.options.forEach((option, index) => {
         const button = document.createElement('button');
-        button.textContent = question.options[i];
+        button.textContent = option;
         button.className = 'option-btn';
-        button.onclick = () => checkAnswer(i);
+        button.addEventListener('click', () => checkAnswer(index));
         optionsContainer.appendChild(button);
-    }
+    });
 
     document.getElementById('next-btn').classList.add('hidden');
 }
 
+function displayGreeting() {
+    document.getElementById('myName').textContent = `Hello, ${currentPlayerName}!`;
+}
+
 function checkAnswer(selectedOption) {
-    const correct = questions[currentQuestion].correct;
-    if (selectedOption === correct) {
+    if (selectedOption === questions[currentQuestion].correct) {
         score++;
     }
     document.getElementById('next-btn').classList.remove('hidden');
 }
 
-function endQuiz() {
+async function endQuiz() {
     document.getElementById('quiz-container').classList.add('hidden');
     const resultContainer = document.getElementById('result-container');
     resultContainer.classList.remove('hidden');
+    document.getElementById('result-text').textContent = `${currentPlayerName}, you scored ${score} out of ${questions.length}`;
 
-    const percentage = (score / questions.length) * 100;
-    document.getElementById('result-text').textContent = `${currentPlayerName}, you scored ${score} out of ${questions.length} (${percentage.toFixed(2)}%)`;
-
-    // Save score to the database
-    saveScoreToDb(currentPlayerName, score, questions.length, currentDate); // Pass the current date
-
+    await saveScoreToDb(currentPlayerName, score, questions.length, currentDate); // Await the score saving
     displayHighScores();
 }
 
-function displayHighScores() {
+// Display high scores
+async function displayHighScores() {
     const scoresList = document.getElementById('scores-list');
     scoresList.innerHTML = '<h3>High Scores</h3>';
 
-    // Fetch high scores from the database here
-    fetchHighScores().then(highScores => {
+    try {
+        const highScores = await fetchHighScores();
         highScores.forEach((scoreData, index) => {
             const scoreElement = document.createElement('div');
             scoreElement.className = 'score-item';
-            const date = new Date(scoreData.date).toLocaleDateString();
-            scoreElement.textContent = `${index + 1}. ${scoreData.name} - ${scoreData.score} points (${date})`;
+            scoreElement.textContent = `${index + 1}. ${scoreData.name} - ${scoreData.score} points (${new Date(scoreData.date).toLocaleDateString()})`;
             scoresList.appendChild(scoreElement);
         });
-    }).catch(error => {
+    } catch (error) {
         console.error('Error fetching high scores:', error);
-    });
+        alert('Failed to load high scores. Please try again later.'); // Notify user on error
+    }
 }
 
+// Initialize event listeners
+function init() {
+    document.getElementById('start-btn').addEventListener('click', startQuiz);
+    document.getElementById('restart-btn').addEventListener('click', resetQuiz);
+}
+
+// Reset quiz
 function resetQuiz() {
     currentQuestion = 0;
     score = 0;
-
     document.getElementById('name-prompt').classList.remove('hidden');
     document.getElementById('quiz-container').classList.add('hidden');
     document.getElementById('result-container').classList.add('hidden');
     document.getElementById('player-name').value = '';
-}
-
-function init() {
-    document.getElementById('start-btn').addEventListener('click', startQuiz);
-    document.getElementById('restart-btn').addEventListener('click', resetQuiz);
 }
 
 document.addEventListener('DOMContentLoaded', init);

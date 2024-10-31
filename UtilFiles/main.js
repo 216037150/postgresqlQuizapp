@@ -1,1 +1,1 @@
-import '../client/script.js'
+import script from '../client/script.js';

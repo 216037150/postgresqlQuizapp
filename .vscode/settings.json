@@ -1,0 +1,50 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "ToDoList",
+            "username": "postgres",
+            "database": "todo",
+            "password": ""
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "toList",
+            "database": "toList",
+            "username": "Siyabonga"
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "students",
+            "database": "SiyabongaDB",
+            "username": "Siyabonga"
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "QUIZ_APP",
+            "database": "QUIZ_APP",
+            "username": "Siyabonga"
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "quiz_app_db",
+            "database": "quiz_app_db",
+            "username": "Siyabonga"
+        }
+    ]
+}
